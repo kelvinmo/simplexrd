@@ -1,8 +1,9 @@
 simplexrd
 =========
 
-SimpleXRD is an extraordinary simple parser for
-[XRD documents](http://docs.oasis-open.org/xri/xrd/v1.0/xrd-1.0.html).
+SimpleXRD is an extraordinarily simple parser for
+[XRD documents](http://docs.oasis-open.org/xri/xrd/v1.0/xrd-1.0.html) written
+in PHP 5.
 
 This XRD parser supports all the features of XRD which can be translated into
 its JSON representation under [RFC 6415](http://tools.ietf.org/html/rfc6415).
