@@ -22,6 +22,8 @@ $jrd = $parser->parse($xml);
 $parser->free();
 </pre>
 
+The JSON representation can then be obtained by using `json_encode($jrd)`.
+
 Licensing
 ---------
 
