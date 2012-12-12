@@ -27,4 +27,4 @@ The JSON representation can then be obtained by using `json_encode($jrd)`.
 Licensing
 ---------
 
-Licensing information for SimpleID can be found in the file COPYING.txt.
+Licensing information for SimpleXRD can be found in the file COPYING.txt.
