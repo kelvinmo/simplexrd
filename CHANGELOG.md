@@ -1,3 +1,7 @@
+## 2.2
+
+- Added [Composer](https://getcomposer.org/) package information
+
 ## 2.1
 
 - Improved compliance against [RFC 7033](http://tools.ietf.org/html/rfc7033):
