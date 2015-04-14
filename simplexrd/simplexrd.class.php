@@ -45,30 +45,29 @@
  *
  * <code>
  * $parser = new SimpleXRD();
- * $jrd = $parser->parse($xml);
- * $parser->free();
+ * $parser->load($xml);
+ * $jrd = $parser->parse();
+ * $parser->close();
  * </code>
  *
- * @see http://docs.oasis-open.org/xri/xrd/v1.0/xrd-1.0.html, RFC 6415
+ * @see http://docs.oasis-open.org/xri/xrd/v1.0/xrd-1.0.html, RFC 6415, RFC 7033
  */
 class SimpleXRD {
     /**
-     * XML parser
+     * XRD namespace constant
+     */
+    const XRD_NS = 'http://docs.oasis-open.org/ns/xri/xrd-1.0';
+
+    /**
+     * XSI namespace constant
+     */
+    const XSI_NS = 'http://www.w3.org/2001/XMLSchema-instance';
+
+    /**
+     * XML reader
      * @var resource
      */
-    private $parser;
-    
-    /**
-     * XRD namespace constant
-     * @var string
-     */
-    private $XRD_NS = 'http://docs.oasis-open.org/ns/xri/xrd-1.0';
-    
-    /**
-     * XRD namespace constant
-     * @var string
-     */
-    private $XSI_NS = 'http://www.w3.org/2001/XMLSchema-instance';
+    private $reader;
     
     /**
      * XML namespace constant
@@ -83,35 +82,12 @@ class SimpleXRD {
     private $jrd = array();
     
     /**
-     * CDATA buffer
-     * @var string
-     */
-    private $buffer = '';
-    
-    /**
-     * Attributes buffer
-     * @var array
-     */
-    private $attribs = array();
-    
-    /**
-     * Currently parsed Link buffer
-     * @var array
-     * @access private
-     */
-    private $link = NULL;
-    
-    /**
      * Creates an instance of the XRD parser.
      *
      * This constructor also initialises the underlying XML parser.
      */
     public function __construct() {
-        $this->parser = xml_parser_create_ns();
-        xml_parser_set_option($this->parser, XML_OPTION_CASE_FOLDING,0);
-        xml_set_object($this->parser, $this);
-        xml_set_element_handler($this->parser, 'element_start', 'element_end');
-        xml_set_character_data_handler($this->parser, 'cdata');
+        $this->reader = new XMLReader();
     }
     
     /**
@@ -120,124 +96,128 @@ class SimpleXRD {
      * Note that only the memory associated with the underlying XML parser is
      * freed.  Memory associated with the class itself is not freed.
      *
-     * @access public
      */
-    public function free() {
-        xml_parser_free($this->parser);
+    public function close() {
+        $this->reader->close();
+    }
+
+    /**
+     * Loads an XRD document.
+     *
+     * @param string $xml the XML document to load
+     */
+    public function load($xml) {
+        $this->reader->xml($xml);
     }
     
     /**
-     * Parses an XRD document and returns the JRD-equivalent structure.
+     * Parses the loaded XRD document and returns the JRD-equivalent structure.
      *
-     * @param string $xml the XML document to parse
+     * The $include_expires parameter determines whether the Expires element should
+     * be parsed.  Under the original host-meta JRD RFC 6415, the Expires element is
+     * part of the JRD specification.  However, that element has been removed from the
+     * WebFinger RFC 7033.
+     *
+     * @param bool $include_expires whether the Expires element should be parsed
      * @return array the JRD equivalent structure
-     * @access public
      */
-    public function parse($xml) {
-        xml_parse($this->parser, $xml);
+    public function parse($include_expires = false) {
+        while ($this->reader->read()) {            
+            if (($this->reader->nodeType == XMLReader::ELEMENT) 
+                && ($this->reader->namespaceURI == self::XRD_NS)) {
+                switch ($this->reader->localName) {
+                    case 'XRD':
+                        $this->jrd = array();                        
+                        break;
+                    case 'Expires':
+                        if ($include_expires) $this->jrd['expires'] = $this->reader->readString();
+                        break;
+                    case 'Subject':
+                        $this->jrd['subject'] = $this->reader->readString();
+                        break;
+                    case 'Alias':
+                        if (!isset($this->jrd['aliases'])) $this->jrd['aliases'] = array();
+                        $this->jrd['aliases'][] = $this->reader->readString();
+                        break;
+                    case 'Link':
+                        if (!isset($this->jrd['links'])) $this->jrd['links'] = array();
+                        $this->jrd['links'][] = $this->parseLink();
+                        break;
+                    case 'Property':
+                        if (!isset($this->jrd['properties'])) $this->jrd['properties'] = array();
+                        $this->parseProperty($this->jrd['properties']);
+                        break;
+                }
+            
+            }
+        }
         return $this->jrd;
     }
-    
-    /**
-     * XML parser callback
-     *
-     * @access private
-     */
-    private function element_start(&$parser, $qualified, $attribs) {
-        list($ns, $name) = $this->parse_namespace($qualified);
-        
-        if ($ns == $this->XRD_NS) {
-            switch ($name) {
-                case 'XRD':
-                    $this->jrd = array();
-                    break;
-                case 'Link':
-                    $this->link = $attribs;
-                    break;
-            }
-        }
-        
-        $this->buffer = '';
-        $this->attribs = $attribs;
-    }
 
     /**
-     * XML parser callback
+     * Parses the Link element.
      *
-     * @access private
+     * @return array the parsed JRD element
      */
-    function element_end(&$parser, $qualified) {
-        list($ns, $name) = $this->parse_namespace($qualified);
-        
-        if ($ns == $this->XRD_NS) {
-            switch ($name) {
-                case 'Subject':
-                    $this->jrd[strtolower($name)] = $this->buffer;
-                    break;
-                case 'Alias':
-                    if (!isset($this->jrd['aliases'])) $this->jrd['aliases'] = array();
-                    $this->jrd['aliases'][] = $this->buffer;
-                    break;
-                case 'Property':
-                    if (isset($this->attribs[$this->XSI_NS . ':nil']) && ($this->attribs[$this->XSI_NS . ':nil'] == 'true')) {
-                        $value = NULL;
-                    } else {
-                        $value = strval($this->buffer);
-                    }
-                    if (is_null($this->link)) {
-                        if (!isset($this->jrd['properties'])) $this->jrd['properties'] = array();
-                        $this->jrd['properties'][$this->attribs['type']] = $value;
-                    } else {
-                        if (!isset($this->link['properties'])) $this->link['properties'] = array();
-                        $this->link['properties'][$this->attribs['type']] = $value;
-                    }
-                    break;
-                case 'Link':
-                    if (!isset($this->jrd['links'])) $this->jrd['links'] = array();
-                    $this->jrd['links'][] = $this->link;
-                    break;
-                case 'Title':
-                    if (is_null($this->link)) {
-                        throw new ErrorException('Title element found, but not child of Link.');
-                        return;
-                    }
-                    if (isset($this->attribs[$this->XML_NS . ':lang'])) {
-                        $lang = $this->attribs[$this->XML_NS . ':lang'];
-                    } else {
-                        $lang = 'und';
-                    }
-                    if (!isset($this->link['titles'])) $this->link['titles'] = array();
-                    $this->link['titles'][$lang] = $this->buffer;
-                    break;
+    private function parseLink() {
+        $link = array();
+
+        while ($this->reader->moveToNextAttribute()) {
+            if ($this->reader->namespaceURI == '') {
+                $link[$this->reader->localName] = $this->reader->value;
             }
         }
 
+        $this->reader->moveToElement();
+        if ($this->reader->isEmptyElement) return $link;
 
-        $this->attribs = array();
+        while ($this->reader->read()) {
+            if (($this->reader->nodeType == XMLReader::END_ELEMENT) &&
+                ($this->reader->namespaceURI == self::XRD_NS) &&
+                ($this->reader->localName == 'Link'))
+                break;
+
+            if (($this->reader->nodeType == XMLReader::ELEMENT) 
+                && ($this->reader->namespaceURI == self::XRD_NS)) {
+                switch ($this->reader->localName) {
+                    case 'Property':
+                        if (!isset($link['properties'])) $link['properties'] = array();
+                        $this->parseProperty($link['properties']);
+                        break;
+                    case 'Title':
+                        if ($this->reader->xmlLang) {
+                            $lang = $this->reader->xmlLang;
+                        } else {
+                            $lang = 'und';
+                        }
+                        if (!isset($link['titles'])) $link['titles'] = array();
+                        $link['titles'][$lang] = $this->reader->readString();
+                        break;
+                }
+            }
+        }
+
+        return $link;
     }
 
     /**
-     * XML parser callback
+     * Parses the Property element.
      *
-     * @access private
-     */
-    function cdata(&$parser, $data) {
-        $this->buffer .= $data;
-    }
-    
-    /**
-     * Parses a namespace-qualified element name.
+     * The Property element can be a child of either the root XRD
+     * element or the Link element
      *
-     * @param string $qualified the qualified name
-     * @return array an array with two elements - the first element contains
-     * the namespace qualifier (or an empty string), the second element contains
-     * the element name
-     * @access protected
+     * @param array &$el the parent JRD element
      */
-    private function parse_namespace($qualified) {
-        $pos = strrpos($qualified, ':');
-        if ($pos !== FALSE) return array(substr($qualified, 0, $pos), substr($qualified, $pos + 1, strlen($qualified)));
-        return array('', $qualified);
+    private function parseProperty(&$el) {
+        $type = $this->reader->getAttribute('type');
+        if ($this->reader->getAttributeNs('nil', self::XSI_NS)) {
+            $value = null;
+        } else {
+            $value = $this->reader->readString();
+        }
+        $el[$this->reader->getAttribute('type')] = $value;
+
+        $this->reader->next();
     }
 }
 ?>

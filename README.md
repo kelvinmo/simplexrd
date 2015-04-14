@@ -18,7 +18,8 @@ into a variable called `$xml`. Then the code is simply
 
 <pre>
 $parser = new SimpleXRD();
-$jrd = $parser->parse($xml);
+$parser->load($xml);
+$jrd = $parser->parse();
 $parser->free();
 </pre>
 
