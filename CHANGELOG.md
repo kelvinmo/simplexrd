@@ -1,3 +1,9 @@
+## 3.0
+
+- Changed from expat XML library to libxml and XMLReader
+- Changed API.  Added `->load()` and changed `->parse()`
+
+
 ## 2.2
 
 - Added [Composer](https://getcomposer.org/) package information
