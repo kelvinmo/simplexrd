@@ -1,8 +1,11 @@
+## 3.1
+
+- Added [Travis CI](https://travis-ci.org/) configuration
+
 ## 3.0
 
 - Changed from expat XML library to libxml and XMLReader
 - Changed API.  Added `->load()` and changed `->parse()`
-
 
 ## 2.2
 
