@@ -1,5 +1,6 @@
 <?php
 
+chdir(__DIR__);
 include_once "../simplexrd/simplexrd.class.php";
 
 class SimpleXRDTest extends PHPUnit_Framework_TestCase {
