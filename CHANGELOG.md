@@ -1,3 +1,7 @@
+## 3.1.1
+
+- Changed XML loading code to prevent XML external entity processing attacks
+
 ## 3.1
 
 - Added [Travis CI](https://travis-ci.org/) configuration

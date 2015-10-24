@@ -68,7 +68,7 @@ class SimpleXRD {
      * @var resource
      */
     private $reader;
-    
+
     /**
      * XML namespace constant
      * @var string
@@ -80,7 +80,7 @@ class SimpleXRD {
      * @var array
      */
     private $jrd = array();
-    
+
     /**
      * Creates an instance of the XRD parser.
      *
@@ -89,7 +89,7 @@ class SimpleXRD {
     public function __construct() {
         $this->reader = new XMLReader();
     }
-    
+
     /**
      * Frees memory associated with the underlying XML parser.
      *
@@ -107,9 +107,9 @@ class SimpleXRD {
      * @param string $xml the XML document to load
      */
     public function load($xml) {
-        $this->reader->xml($xml);
+        $this->reader->xml($xml, null, LIBXML_NONET);
     }
-    
+
     /**
      * Parses the loaded XRD document and returns the JRD-equivalent structure.
      *
@@ -122,12 +122,12 @@ class SimpleXRD {
      * @return array the JRD equivalent structure
      */
     public function parse($include_expires = false) {
-        while ($this->reader->read()) {            
-            if (($this->reader->nodeType == XMLReader::ELEMENT) 
+        while ($this->reader->read()) {
+            if (($this->reader->nodeType == XMLReader::ELEMENT)
                 && ($this->reader->namespaceURI == self::XRD_NS)) {
                 switch ($this->reader->localName) {
                     case 'XRD':
-                        $this->jrd = array();                        
+                        $this->jrd = array();
                         break;
                     case 'Expires':
                         if ($include_expires) $this->jrd['expires'] = $this->reader->readString();
@@ -148,7 +148,7 @@ class SimpleXRD {
                         $this->parseProperty($this->jrd['properties']);
                         break;
                 }
-            
+
             }
         }
         return $this->jrd;
@@ -177,7 +177,7 @@ class SimpleXRD {
                 ($this->reader->localName == 'Link'))
                 break;
 
-            if (($this->reader->nodeType == XMLReader::ELEMENT) 
+            if (($this->reader->nodeType == XMLReader::ELEMENT)
                 && ($this->reader->namespaceURI == self::XRD_NS)) {
                 switch ($this->reader->localName) {
                     case 'Property':
