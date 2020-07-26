@@ -1,3 +1,7 @@
+## 3.2
+
+- Update composer.json for better PHP7 support
+
 ## 3.1.1
 
 - Changed XML loading code to prevent XML external entity processing attacks
