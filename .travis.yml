@@ -1,4 +1,5 @@
 language: php
+dist: trusty
 php:
     - 5.3
     - 5.4
@@ -9,4 +10,15 @@ php:
     - 7.2
     - 7.3
     - 7.4
+
+before_install:
+    - travis_retry composer self-update
+    - phpenv config-rm xdebug.ini
     
+install:
+    - travis_retry composer install
+
+notifications:
+    email:
+        on_success: false
+
