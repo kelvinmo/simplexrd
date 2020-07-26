@@ -2,7 +2,7 @@
     "name": "kelvinmo/simplexrd",
     "description": "An extraordinarily simple XRD parser written in PHP.",
     "require": {
-        "php": ">=5.3.0",
+        "php": "^5.3 | ^7.0",
         "ext-xmlreader": "*"
     },
     "license": "BSD-3-Clause",
