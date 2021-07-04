@@ -1,3 +1,8 @@
+## 3.2.1
+
+- Update composer.json to support PHP 8.0
+
+
 ## 3.2
 
 - Update composer.json for better PHP7 support
