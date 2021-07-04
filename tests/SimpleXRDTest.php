@@ -1,9 +1,7 @@
 <?php
+use PHPUnit\Framework\TestCase;
 
-chdir(__DIR__);
-include_once "../simplexrd/simplexrd.class.php";
-
-class SimpleXRDTest extends PHPUnit_Framework_TestCase {
+class SimpleXRDTest extends TestCase {
 
     protected $xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0"
