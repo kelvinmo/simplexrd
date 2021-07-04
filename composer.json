@@ -17,5 +17,8 @@
     ],
     "autoload": {
         "classmap": [ "simplexrd/" ]
+    },
+    "scripts": {
+        "test": [ "@composer install", "phpunit" ]
     }
 }
