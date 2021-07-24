@@ -16,12 +16,12 @@ Usage
 Using the parser is straightforward.  Assuming the XRD code has been loaded
 into a variable called `$xml`. Then the code is simply
 
-<pre>
+```php
 $parser = new SimpleXRD();
 $parser->load($xml);
 $jrd = $parser->parse();
 $parser->free();
-</pre>
+```
 
 The JSON representation can then be obtained by using `json_encode($jrd)`.
 
