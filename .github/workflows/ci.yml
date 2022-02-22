@@ -4,7 +4,7 @@ on: [ push, pull_request ]
 
 jobs:
   tests:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         php-versions:
